@@ -1,5 +1,6 @@
-from flask import Blueprint
+from flask import Blueprint, request
 from flask import jsonify
+from elasticsearch import Elasticsearch
 
 from services import example_services as example_services
 
@@ -11,9 +12,9 @@ openai_bp = Blueprint(name='answer',
                       import_name=__name__,
                       url_prefix='/answer')
 
-search_bp = Blueprint(name='docs_search',
+search_bp = Blueprint(name='search',
                       import_name=__name__,
-                      url_prefix='/docs_search')
+                      url_prefix='/search')
 
 query_bp = Blueprint(name='query',
                       import_name=__name__,
@@ -36,14 +37,18 @@ def answer_route() -> str:
     result = example_services.answer_route(data=data)
     return jsonify(result=result)
 
-@search_bp.route('/', methods=['GET']) # Flask <-> ElasticSearch
-def docs_search() -> str:
-    data = 'hello_world'
-    result = example_services.docs_search(data=data)
-    return jsonify(result=result)
+es = Elasticsearch('https://localhost:9200')
+
+@search_bp.route('/', methods=['POST']) # Flask <-> ElasticSearch
+def docs_search():
+    query = request.json.get('query')
+    result = es.search(index='my_index', body={'query': {'match' : {'text': query}}})
+    hits = result['hits']['hits']
+    response = {'hits': hits}
+    return jsonify(response)
 
 @query_bp.route('/', methods=['POST']) # Android <-> Flask
-def generate_answer() -> str:
-    data = 'hello_world'
-    result = example_services.generate_answer(data=data)
-    return jsonify(answer=result)
+def generate_answer():
+    data = request.json
+    response = example_services.generate_answer(data)
+    return jsonify(response)
