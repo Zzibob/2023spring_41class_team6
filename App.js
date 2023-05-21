@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   title:{
     fontSize: 50,
     fontWeight: "bold",
-    marginBottom: 40,
+    marginBottom: 30,
   },
   inputView: {
     backgroundColor: "white",
